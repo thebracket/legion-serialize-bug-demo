@@ -5,10 +5,6 @@ mod serialize;
 use serialize::{ComponentRegistration, TagRegistration};
 
 #[derive(TypeUuid, Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
-#[uuid = "3e878aaa-b147-4d6f-8a03-ce0acdb26191"]
-struct IdentityTag(usize);
-
-#[derive(TypeUuid, Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 #[uuid = "d21ed260-2438-417e-8701-6fb276c4ba09"]
 struct TreeTag{}
 
@@ -22,7 +18,6 @@ fn component_registration() -> (Vec<ComponentRegistration>, Vec<TagRegistration>
     ];
     let tag_registrations = vec![
         TagRegistration::of::<TreeTag>(),
-        TagRegistration::of::<IdentityTag>(),
     ];
     (comp_registrations, tag_registrations)
 }
@@ -31,7 +26,7 @@ fn insert_fake_trees(ecs: &mut World) {
     println!("Insert a bunch of fake trees, similar to those in my game");
     for i in 0..3 {
         ecs.insert(
-            (TreeTag {}, IdentityTag(i)),
+            (TreeTag {}, ),
             vec![(
                 Position{ idx: i * 2},
             )],
@@ -41,9 +36,7 @@ fn insert_fake_trees(ecs: &mut World) {
 
 fn print_tree(ecs: &World, id: usize) {
     println!("Searching for tree {}", id);
-    let tree_id = IdentityTag(id);
     <Read<Position>>::query()
-        .filter(tag_value(&tree_id))
         .iter_entities(ecs)
         .for_each(|(entity, pos)| {
             println!("Found the entity: {:?}, world position: {:?}", entity, pos);
@@ -59,10 +52,8 @@ fn works_fine() {
     print_tree(&ecs, 1);
 
     println!("We want to kill tree #1");
-    let tree_id = IdentityTag(1);
     let mut commands = CommandBuffer::new(&ecs);
     <Read<Position>>::query()
-        .filter(tag_value(&tree_id))
         .iter_entities(&ecs)
         .for_each(|(entity, pos)| {
             println!("Found the entity to delete: {:?}, world position: {:?}", entity, pos);
@@ -87,15 +78,14 @@ fn crashes() {
 
     println!("Save the world and load it again");
     let serialized = serialize::serialize_world(&ecs);
+    println!("{:#?}", serialized);
     let mut ecs = serialize::deserialize_world(serialized, &universe);
 
     print_tree(&ecs, 1);
 
     println!("We want to kill tree #1");
-    let tree_id = IdentityTag(1);
     let mut commands = CommandBuffer::new(&ecs);
     <Read<Position>>::query()
-        .filter(tag_value(&tree_id))
         .iter_entities(&ecs)
         .for_each(|(entity, pos)| {
             println!("Found the entity to delete: {:?}, world position: {:?}", entity, pos);
