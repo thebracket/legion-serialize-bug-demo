@@ -416,5 +416,8 @@ pub fn deserialize_world(raw: String, universe: &Universe) -> World {
     let mut deserializer = ron::Deserializer::from_str(&raw).expect("Flub");
     legion::serialize::de::deserialize(&mut deserialized_world, &de_helper, &mut deserializer)
         .unwrap();
-    deserialized_world
+
+    let mut new_world = universe.create_world();
+    new_world.move_from(deserialized_world);
+    new_world
 }
